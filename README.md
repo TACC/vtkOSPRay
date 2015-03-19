@@ -3,6 +3,7 @@ vtkOSPRay
 
 <h2>NOTICE</h2>
 <p>Currently vtkOSPRay is awaiting approval for release.  Here are the current source checkout and build instructions for those with priviledges on TACC's stampede system and group access to the private repository.  These instructions will be updated upon release.
+
 </p>
 
 <h2>About</h2>
