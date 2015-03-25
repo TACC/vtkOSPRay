@@ -15,11 +15,13 @@ pvOSPRay is a ParaView plugin which creates a custom view using vtkOSPRay for re
 
 <h2>Using Existing modules on Stampede and Maverick</h2>
 <p>modules are provided for running on TACC's Stampede and Maverick clusters.  A system wide release is planned, but for now module files must of custom loaded with the below instructions </p>
-module use /work/01336/carson/opt/modulefiles
-module load paraview
-module load pvospray
-vglrun paraview
-the plugin should automatically be loaded. Click the "x" on the top right of the window to close the rendering, and select "OSPRay" to create a pvOSPRay rendering view.
+<lu>
+<li>module use /work/01336/carson/opt/modulefiles</li>
+<li>module load paraview</li>
+<li>module load pvospray</li>
+<li>vglrun paraview</li>
+<li>the plugin should automatically be loaded. Click the "x" on the top right of the window to close the rendering, and select "OSPRay" to create a pvOSPRay rendering view.</li>
+</lu>
 
 <h2>Building</h2>
 build OSPRay, from directions at: http://ospray.github.io
