@@ -29,8 +29,6 @@ OSPRay requires the same tools as building ParaView, such as CMake.  Additionall
 <h3>Building OSPRay</h3>
 <ul>
 <li>
-</li>
-<li>
 complete directions for building ospray can be found at: http://ospray.github.io
 </li>
 <li>
@@ -58,7 +56,6 @@ make -j4
 <h3>Building ParaView</h3>
 <ul>
 <li>download ParaView 4.1.0 source from the website, or click <a href="http://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v4.1&type=source&os=all&downloadFile=ParaView-v4.1.0-source.tar.gz">here</a></li> to paraview_source_dir
-</ul>
 <li>
 cd <paraview_source_dir>/Plugins
 </li>
@@ -76,6 +73,7 @@ generate
 <li>
 make -j4
 </li>
+</ul>
 
 <h3>Troubleshooting</h3>
 Note that some older version of ICC may run into issues, there is currently a known issue building the plugin with icc 14.0.1 which is being fixed.  If you run into this error in constants.h, remove the instantiation of "True" and "False", and instead change any calls in other files to "TrueTy()" or "FalseTy".
