@@ -34,10 +34,10 @@ OSPRay requires the same tools as building ParaView, such as CMake.  Additionall
 complete directions for building ospray can be found at: http://ospray.github.io
 </li>
 <li>
-git clone https://github.com/ospray/ospray.git <path_to_ospray_dir>
+git clone https://github.com/ospray/ospray.git path_to_ospray_dir
 </li>
 <li>
-cd <path_to_ospray_dir>
+cd path_to_ospray_dir
 </li>
 <li>
 git checkout 1c917bbf87374cbcb907470a82e99abf25b7ebd2
@@ -70,7 +70,7 @@ cd paraview_build_dir
 </li>
 <li>
 CXX="icpc" CC="icc" ccmake paraview_source_dir .  configure. enable PARAVIEW_BUILD_PLUGIN_OSPRayView. 
-you will need to set the relevant OSPRAY_DIR and OSPRAY_BUILD_DIR to the checkout of OSPRay repo and the build directory.
+you will need to set the relevant OSPRAY_DIR and OSPRAY_BUILD_DIR to path_to_ospray_dir.
 generate
 </li>
 <li>
