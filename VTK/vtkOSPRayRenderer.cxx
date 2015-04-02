@@ -170,6 +170,7 @@ vtkOSPRayRenderer::vtkOSPRayRenderer()
   ospSetParam(oRenderer,"model",oModel);
   ospSetParam(oRenderer,"camera",oCamera);
   ospSet1i(oRenderer,"spp",Samples);
+  ospSet3f(oRenderer,"bgColor",0.8,0.8,0.8);
   ospCommit(oModel);
   ospCommit(oCamera);
   ospCommit(oRenderer);
@@ -273,6 +274,8 @@ void vtkOSPRayRenderer::InitEngine()
 //----------------------------------------------------------------------------
 void vtkOSPRayRenderer::SetBackground(double r, double g, double b)
 {
+  OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;
+  ospSet3f(oRenderer,"bgColor",r,g,b);
   // if ((this->Background[0] != r)||
   //     (this->Background[1] != g)||
   //     (this->Background[2] != b))
@@ -467,6 +470,7 @@ void vtkOSPRayRenderer::DeviceRender()
   ospSetParam(oRenderer,"model",oModel);
   ospSetParam(oRenderer,"camera",oCamera);
 
+
   // this->OSPRayManager->OSPRayModel = ospNewModel();
   // ospSetParam(this->OSPRayManager->OSPRayRenderer,"world", this->OSPRayManager->OSPRayModel);
   // ospSetParam(this->OSPRayManager->OSPRayRenderer,"model", this->OSPRayManager->OSPRayModel);
@@ -612,9 +616,15 @@ void vtkOSPRayRenderer::LayerRender()
     // cout << "msgView: Adding a hard coded directional light as the sun." << endl;
     OSPLight ospLight = ospNewLight(renderer, "DirectionalLight");
     ospSetString(ospLight, "name", "sun" );
-    ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3f(ospLight, "direction", 0, -1, 0);
+    ospSet3f(ospLight, "color", .6, .6, .55);
+    ospSet3f(ospLight, "direction", -1, -1, 0);
     ospCommit(ospLight);
+    pointLights.push_back(ospLight);
+    OSPLight ospLight2 = ospNewLight(renderer, "DirectionalLight");
+    ospSetString(ospLight2, "name", "shadow" );
+    ospSet3f(ospLight2, "color", .3, .35, .4);
+    ospSet3f(ospLight2, "direction", 1, .5, 0);
+    ospCommit(ospLight2);
     pointLights.push_back(ospLight);
     OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
     ospSetData(renderer, "directionalLights", pointLightArray);
@@ -850,7 +860,7 @@ void vtkOSPRayRenderer::SetSamples( int newval )
 //----------------------------------------------------------------------------
 void vtkOSPRayRenderer::SetEnableAO( int newval )
 {
-  // std::cerr << "vtkOSPRayRenderer::SetSamples " << newval << "\n";
+  std::cerr << "vtkOSPRayRenderer::SetEnableAO " << newval << "\n";
   #if 1
   if (this->EnableAO == newval)
     {
@@ -884,7 +894,10 @@ void vtkOSPRayRenderer::SetEnableAO( int newval )
   // this->OSPRayRenderer = ospNewRenderer("obj");
   // this->OSPRayRenderer = ospNewRenderer("pathtracer");
   if (newval != 0)
+  {
+    printf("using ao\n");
     this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("ao4");
+  }
   else
     this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("obj");
   OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;

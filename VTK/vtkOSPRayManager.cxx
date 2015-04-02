@@ -46,6 +46,8 @@
 // #include "ospray/common/OspCommon.h"
      #endif
 
+// #include <typeinfo.h>
+
 bool vtkOSPRayManager::initialized = false;
 
 vtkStandardNewMacro(vtkOSPRayManager);
@@ -73,7 +75,7 @@ vtkOSPRayManager::vtkOSPRayManager()
   // OSPRayModel = ospNewModel();
   // OSPRayRenderer = ospNewRenderer();
   // OSPRayCamera = ospNewCamera("perspective");
-    printf("%s::%s\n",typeid(*this).name(),__FUNCTION__);
+    // printf("%s::%s\n",typeid(*this).name(),__FUNCTION__);
   if (!initialized)
   {
     initialized=true;
@@ -81,6 +83,7 @@ vtkOSPRayManager::vtkOSPRayManager()
   {
     int ac =1;
     const char* av[] = {"gluray\0","\0"};
+    // const char* av[] = {"gluray\0","--osp:debug\0"};
     ospInit(&ac, av);
   }
   else  //coi
@@ -89,9 +92,8 @@ vtkOSPRayManager::vtkOSPRayManager()
     const char* av[] = {"gluray\0","--osp:coi","\0"};
     ospInit(&ac, av);
   }
-  ospLoadModule("pathtracer");
+  //ospLoadModule("pathtracer");
 }
-  // const char* av[] = {"gluray","--osp:debug"};
 
 
 

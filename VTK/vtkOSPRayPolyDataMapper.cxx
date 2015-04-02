@@ -992,7 +992,7 @@ void vtkOSPRayPolyDataMapper::Draw(vtkRenderer *renderer, vtkActor *actor)
     //   texCoords.push_back( Manta::Vector(tcoord[0], 0, 0) );
       mesh->texCoords.push_back(vtkosp::Vec2(tcoord[0],0));
         // mesh->colors.push_back(vtkosp::Vec4(color[0]/255.0,color[1]/255.0,color[2]/255.0,1));
-      printf("texCoord: %f %f\n", tcoord[0], 0);
+      // printf("texCoord: %f %f\n", tcoord[0], 0);
       }
 
       // printf("NEED TO IMPLEMENT COLORCOORDINATES\n");
@@ -1302,7 +1302,7 @@ if (!ospMaterial)
   }
   // mantaActor->ospMesh = ospMesh;
   // mantaActor->OSPRayModel = ((osp::Model*)ospModel);
-  printf("adding osp mesh num triangles: %d\n", numTriangles);
+  printf("added osp mesh num triangles: %d\n", numTriangles);
   #endif
 
 

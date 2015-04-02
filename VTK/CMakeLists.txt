@@ -41,6 +41,7 @@ SET ( MANTA_CLASSES
   vtkOSPRayRenderer.cxx
   vtkOSPRayTestSource.cxx
   vtkOSPRayTexture.cxx
+  vtkOSPRayVolumeMapper.cxx
   )
 
 IF (BUILD_AGAINST_PARAVIEW)

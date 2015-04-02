@@ -279,7 +279,7 @@ void vtkOSPRayTexture::Load(vtkRenderer *ren)
       printf("creating new texture size %d %d\n", xsize, ysize);
       for(int i =0; i < xsize*bytesPerPixel; i++)
       {
-        std::cerr << int(dataPtr[i]) << " ";
+        // std::cerr << int(dataPtr[i]) << " ";
       }
       printf("\n\ncolor values: \n");
 
@@ -302,9 +302,9 @@ void vtkOSPRayTexture::Load(vtkRenderer *ren)
             pixel.g = color[1];
             pixel.b = color[2];
             pixels[v*xsize + u] = pixel;
-            printf("[%d %d %d] ", pixel.r, pixel.g, pixel.b);
+            // printf("[%d %d %d] ", pixel.r, pixel.g, pixel.b);
           }
-          printf("\n");
+          // printf("\n");
         }
 
     // create Manta texture from the image
