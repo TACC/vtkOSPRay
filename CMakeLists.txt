@@ -27,21 +27,27 @@
 
 
 cmake_minimum_required(VERSION 2.8.8)
-MESSAGE("pvOSPRay")
-project(OSPRayView)
+project(pvOSPRay)
 
 # FIXME: this is ABSURD!!! Needs to be removed. I don't have time right now.
 set (BUILD_AGAINST_PARAVIEW 1)
 
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-  "${CMAKE_SOURCE_DIR}/Plugins/pvOSPRay/CMake/")
-MESSAGE("pvOSPRay CMAKE_MODULE_PATH" ${CMAKE_MODULE_PATH})
+  ${PROJECT_SOURCE_DIR}/CMake
+  )
+MESSAGE("pvOSPRay CMAKE_MODULE_PATH " ${CMAKE_MODULE_PATH})
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
 
 
 #
 # ospray
 # 
-find_package(OSPRay)
+find_package(OSPRay REQUIRED)
 INCLUDE_DIRECTORIES(${OSPRAY_INCLUDE_DIRS})
 #
 #
