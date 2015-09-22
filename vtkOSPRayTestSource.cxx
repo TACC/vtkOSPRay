@@ -1,18 +1,25 @@
-/*=========================================================================
+/* ======================================================================================= 
+   Copyright 2014-2015 Texas Advanced Computing Center, The University of Texas at Austin  
+   All rights reserved.
+                                                                                           
+   Licensed under the BSD 3-Clause License, (the "License"); you may not use this file     
+   except in compliance with the License.                                                  
+   A copy of the License is included with this software in the file LICENSE.               
+   If your copy does not contain the License, you may obtain a copy of the License at:     
+                                                                                           
+       http://opensource.org/licenses/BSD-3-Clause                                         
+                                                                                           
+   Unless required by applicable law or agreed to in writing, software distributed under   
+   the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY 
+   KIND, either express or implied.                                                        
+   See the License for the specific language governing permissions and limitations under   
+   limitations under the License.
 
-  Program:   Visualization Toolkit
-  Module:    vtkOSPRayTestSource.cxx
+   pvOSPRay is derived from VTK/ParaView Los Alamos National Laboratory Modules (PVLANL)
+   Copyright (c) 2007, Los Alamos National Security, LLC
+   ======================================================================================= */
 
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-// .NAME vtkOSPRayTestSource - produce triangles to benchmark manta with
+// .NAME vtkOSPRayTestSource - produce triangles to benchmark OSPRay with
 
 #include "vtkOSPRayTestSource.h"
 #include "vtkObjectFactory.h"
@@ -59,11 +66,6 @@ int vtkOSPRayTestSource::RequestInformation(
   vtkInformationVector **vtkNotUsed(inputV),
   vtkInformationVector *output)
 {
-  vtkInformation *outInfo = output->GetInformationObject(0);
-  outInfo->Set
-    (
-     vtkStreamingDemandDrivenPipeline::MAXIMUM_NUMBER_OF_PIECES(), -1
-     );
   return 1;
 }
 
@@ -89,7 +91,6 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
         vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_PIECES());
     }
 
-  //cerr << "I am " << Rank << "/" << Processors << endl;
 
   vtkPolyData *outPD =
     vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
@@ -104,9 +105,6 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
   vtkIdType myStart = this->Resolution/Processors * Rank;
   vtkIdType myEnd = this->Resolution/Processors * (Rank+1);
 
-  //cerr << "I produce " << myStart << " to " << myEnd << endl;
-
-  //TODO: Give each processor a different slice of the triangles
   vtkIdType indices[3];
   vtkIdType minIndex = this->Resolution;
   vtkIdType maxIndex = 0;
@@ -119,27 +117,18 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
 
     for (vtkIdType c = 0; c < 3; c++)
       {
-      //TODO: Sliding window should be a percentage
       offset = vtkMath::Random()*this->SlidingWindow*this->Resolution -
         (this->SlidingWindow*this->Resolution/2.0);
       indices[c] = ((vtkIdType)((double)i+c + offset));
-      //don't wrap around, because can't limit ranges per processor
-      //but don't restrict to strictly within my local window either
-      //because otherwise geometric would change with #processors
       if (indices[c] < 0 || indices[c] >= this->Resolution)
         {
-        //cerr << "BOUNCE " << indices[c] << " ";
         indices[c] = ((vtkIdType)((double)i+c - offset));
-        //cerr << indices[c] << endl;
         }
 
-      //don't make degenerate triangles
       if (indices[0] == indices[1] ||
           indices[0] == indices[2] ||
           indices[2] == indices[1])
         {
-        //cerr << "REJECT " << i << " "
-        //  << indices[0] << " " << indices[1] << " " << indices[2] << endl;
         c--;
         }
       }
@@ -160,19 +149,14 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
         }
 
       outPD->InsertNextCell(VTK_TRIANGLE, 3, indices);
-      //cerr << "TRI " << i << " "
-      //  << indices[0] << " " << indices[1] << " " << indices[2] << endl;
       }
     if (i % (this->Resolution/10) == 0)
       {
       double frac = (double)i/this->Resolution * 0.33;
       this->UpdateProgress(frac);
-      //cerr << frac << endl;
       }
     }
 
-  //cerr << "I refer to verts between "
-  //  << minIndex << " and " << maxIndex << endl;
 
   //shift indices to 0, because each processor only produces local points
   vtkCellArray *polys = outPD->GetPolys();
@@ -192,7 +176,6 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
       {
       double frac = (double)i/nCells * 0.33 + 0.33;
       this->UpdateProgress(frac);
-      //cerr << frac << endl;
       }
     }
 
@@ -207,7 +190,6 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
     Z = Z+vtkMath::Random() * this->DriftFactor - this->DriftFactor*0.5;
     if (i >= minIndex && i <= maxIndex)
       {
-      //cerr << "PT " << i << " @ " << X <<","<< Y << "," << Z << endl;
       pts->InsertNextPoint(X, Y, Z);
       }
 
@@ -215,14 +197,11 @@ int vtkOSPRayTestSource::RequestData(vtkInformation *vtkNotUsed(info),
       {
       double frac = (double)i/this->Resolution * 0.33 + 0.66;
       this->UpdateProgress(frac);
-      //cerr << frac << endl;
       }
     }
   outPD->SetPoints(pts);
   pts->Delete();
 
-  //cerr << "DONE" << endl;
-  //TODO: Add attributes
 
   return 1;
 }
