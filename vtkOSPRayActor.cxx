@@ -155,6 +155,7 @@ void vtkOSPRayActor::PreRender()
 //----------------------------------------------------------------------------
 void vtkOSPRayActor::UpdateObjects( vtkRenderer * ren )
 {
+  std::cerr << __PRETTY_FUNCTION__ << " 1\n";
   vtkOSPRayRenderer * OSPRayRenderer =
   vtkOSPRayRenderer::SafeDownCast( ren );
   if (!OSPRayRenderer)
@@ -184,6 +185,7 @@ void vtkOSPRayActor::UpdateObjects( vtkRenderer * ren )
   if (!this->GetVisibility())
     return;
 
+  std::cerr << __PRETTY_FUNCTION__ << " 2\n";
   //Add what we are now supposed to show.
   {
     vtkTimerLog::MarkStartEvent("Execute AccelStructBuild ");

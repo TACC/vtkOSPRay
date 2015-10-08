@@ -41,7 +41,7 @@
 #include "vtkPNGWriter.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkPolyData.h"
-#include "vtkMultiProcessController.h"
+// #include "vtkMultiProcessController.h"
 
 #include <vtkSmartPointer.h>
 #include <vtkCommand.h>
@@ -99,7 +99,7 @@ Accumulate(false)
   Frame=0;
   HasVolume= false;
   ClearAccumFlag=false;
-  ComputeDepth = vtkMultiProcessController::GetGlobalController()->GetNumberOfProcesses() > 1;
+  ComputeDepth = 0;//vtkMultiProcessController::GetGlobalController()->GetNumberOfProcesses() > 1;
   
   this->EngineInited=false;
   this->NumberOfWorkers = 1;
@@ -319,6 +319,7 @@ void vtkOSPRayRenderer::UpdateSize()
 //----------------------------------------------------------------------------
 void vtkOSPRayRenderer::DeviceRender()
 {
+  std::cerr << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
   renderables.clear();
   if ((! prog_flag) || ClearAccumFlag)
   {
@@ -395,6 +396,286 @@ void vtkOSPRayRenderer::DeviceRender()
 // let the renderer display itself appropriately based on its layer index
 void vtkOSPRayRenderer::LayerRender()
 {
+  std::cerr << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+  int     i, j;
+  int     rowLength,  OSPRaySize[2];
+  int     minWidth,   minHeight;
+  int     hOSPRayDiff, hRenderDiff;
+  int     renderPos[2];
+  int*    renderSize  = NULL;
+  int*    renWinSize  = NULL;
+  bool    stereoDumy;
+  float*  OSPRayBuffer = NULL;
+  double* renViewport = NULL;
+  
+  // collect some useful info
+  renderSize = this->GetSize();
+  renWinSize = this->GetRenderWindow()->GetActualSize();
+  renViewport= this->GetViewport();
+  renderPos[0] = int( renViewport[0] * renWinSize[0] + 0.5f );
+  renderPos[1] = int( renViewport[1] * renWinSize[1] + 0.5f );
+  minWidth = renderSize[0];
+  minHeight =renderSize[1];
+  hOSPRayDiff = 0;
+  hRenderDiff = 0;
+  // memory allocation and acess to the OSPRay image
+  int size = renderSize[0]*renderSize[1];
+  if (this->ImageX != renderSize[0] || this->ImageY != renderSize[1])
+  {
+    this->ImageX = renderSize[0];
+    this->ImageY = renderSize[1];
+    
+    if (this->ColorBuffer) delete[] this->ColorBuffer;
+    this->ColorBuffer = new float[ size ];
+    
+    if (this->DepthBuffer) delete[] this->DepthBuffer;
+    this->DepthBuffer = new float[ size ];
+    
+    if (this->osp_framebuffer) ospFreeFrameBuffer(this->osp_framebuffer);
+    this->osp_framebuffer = ospNewFrameBuffer(osp::vec2i(renderSize[0], renderSize[1]), OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
+    ospFrameBufferClear(osp_framebuffer, OSP_FB_ACCUM);
+    AccumCounter=0;
+    this->UpdateCamera();
+  }
+    //TODO: save framebuffer
+  // mantaBuffer = static_cast< float * >( mantaBase->getRawData(0) );
+
+  // update this->ColorBuffer and this->DepthBuffer from the Manta
+  // RGBA8ZfloatPixel array
+  double *clipValues = this->GetActiveCamera()->GetClippingRange();
+  double depthScale  = 1.0f / ( clipValues[1] - clipValues[0] );
+
+  //
+  //  OSPRay
+  //
+  // printf("ospRender\n");
+  OSPRenderer renderer = ((OSPRenderer)this->OSPRayManager->OSPRayRenderer);
+  // std::cout << "renderer: " << this->OSPRayManager->ospRenderer << std::endl;
+  // PRINT(renderer);
+  // OSPFramebuffer framebuffer = this->OSPRayManager->ospFramebuffer;
+  OSPModel ospModel = ((OSPModel)this->OSPRayManager->OSPRayModel);
+  // PRINT(ospModel);
+  ospCommit(ospModel);
+
+              //TODO: Need to figure out where we're going to read lighting data from
+    //begin light test
+    std::vector<OSPLight> pointLights;
+    // cout << "msgView: Adding a hard coded directional light as the sun." << endl;
+    OSPLight ospLight = ospNewLight(renderer, "DirectionalLight");
+    ospSetString(ospLight, "name", "sun" );
+    ospSet3f(ospLight, "color", .6, .6, .55);
+    ospSet3f(ospLight, "direction", -1, -1, 0);
+    ospCommit(ospLight);
+    pointLights.push_back(ospLight);
+    OSPLight ospLight2 = ospNewLight(renderer, "DirectionalLight");
+    ospSetString(ospLight2, "name", "shadow" );
+    ospSet3f(ospLight2, "color", .3, .35, .4);
+    ospSet3f(ospLight2, "direction", 1, .5, 0);
+    ospCommit(ospLight2);
+    pointLights.push_back(ospLight);
+    OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
+    ospSetData(renderer, "directionalLights", pointLightArray);
+// updateCamera();
+  ospCommit(renderer);
+  ospCommit(ospModel);
+    //end light test
+
+  // printf("render\n");
+
+
+ospRenderFrame(this->osp_framebuffer,renderer);
+  // ospRenderFrame(framebuffer,renderer);
+
+  float* ospBuffer = (float *) ospMapFrameBuffer(osp_framebuffer);
+
+       // this->OSPRayManager->ospModel = ospNewModel();
+      // ospSetParam(renderer,"world",this->OSPRayManager->ospModel);
+  // ospSetParam(renderer,"model",this->OSPRayManager->ospModel);
+
+  // ospCommit(renderer);
+
+  vtkTimerLog::MarkStartEvent("Image Conversion");
+
+  for ( j = 0; j < minHeight; j ++ )
+    {
+    // there are two floats in each pixel in Manta buffer
+    // int mantaIndex = ( ( j + hMantaDiff  ) * rowLength     ) * 2;
+    // there is only one float in each pixel in the GL RGBA or Z buffer
+    int tupleIndex = ( ( j + hRenderDiff ) * renderSize[0] ) * 1;
+
+    for ( i = 0; i < minWidth; i ++ )
+      {
+      // this->ColorBuffer[ tupleIndex + i ]
+                         // = mantaBuffer[ mantaIndex + i*2     ];
+                         #if USE_OSPRAY
+      this->ColorBuffer[ tupleIndex + i ]
+                         = ospBuffer[ tupleIndex + i  ];
+                         // char testBuff[] = {128,128,255,255};
+                         // this->ColorBuffer[ tupleIndex + i ]
+                         // = *((float*)testBuff);
+                         #endif
+      // float depthValue   = mantaBuffer[ mantaIndex + i*2 + 1 ];
+                         float depthValue = 100; //TODO Carson: HACK
+      // normalize the depth values to [ 0.0f, 1.0f ], since we are using a
+      // software buffer for Z values and never write them to OpenGL buffers,
+      // we don't have to clamp them any more
+      // TODO: On a second thought, we probably don't even have to normalize Z
+      // values at all
+      this->DepthBuffer[ tupleIndex + i ]
+                         = ( depthValue - clipValues[0] ) * depthScale;
+      }
+    }
+
+#if 0
+  // let layer #0 initialize GL depth buffer
+  if ( this->GetLayer() == 0 )
+    {
+    // this->GetRenderWindow()->
+    //   SetZbufferData( renderPos0[0],  renderPos0[1],
+    //                   renderPos0[0] + renderSize[0] - 1,
+    //                   renderPos0[1] + renderSize[1] - 1,
+    //                   this->DepthBuffer );
+
+    this->GetRenderWindow()->
+      SetRGBACharPixelData( renderPos0[0],  renderPos0[1],
+                            renderPos0[0] + renderSize[0] - 1,
+                            renderPos0[1] + renderSize[1] - 1,
+                            (unsigned char*)this->ColorBuffer, 0, 0 );
+    glFinish();
+    }
+  else
+    {
+    //layers on top add the colors of their non background pixels
+    unsigned char*  GLbakBuffer = NULL;
+    GLbakBuffer = this->GetRenderWindow()->
+      GetRGBACharPixelData( renderPos0[0],  renderPos0[1],
+                            renderPos0[0] + renderSize[0] - 1,
+                            renderPos0[1] + renderSize[1] - 1, 0 );
+
+    bool anyhit = false;
+    unsigned char *optr = GLbakBuffer;
+    unsigned char *iptr = (unsigned char*)this->ColorBuffer;
+    float *zptr = this->DepthBuffer;
+    for ( j = 0; j < renderSize[1]; j++)
+    {
+      for ( i = 0; i < renderSize[0]; i++)
+        {
+        const float z = *zptr;
+        if (z > 0 && z < 1.0)
+          {
+          anyhit = true;
+          *(optr+0) = *(iptr+0);
+          *(optr+1) = *(iptr+1);
+          *(optr+2) = *(iptr+2);
+          *(optr+3) = *(iptr+3);
+          }
+        optr+=4;
+        iptr+=4;
+        zptr++;
+        }
+    }
+
+    if (anyhit)
+      {
+      // submit the modified RGB colors to GL BACK buffer
+      this->GetRenderWindow()->
+        SetRGBACharPixelData( renderPos0[0],  renderPos0[1],
+          renderPos0[0] + renderSize[0] - 1,
+          renderPos0[1] + renderSize[1] - 1,
+          GLbakBuffer, 0, 0 );
+      }
+
+    delete [] GLbakBuffer;
+    }
+    #endif
+
+      if ( this->GetLayer() == 1 )
+  {
+    //memcpy(this->ColorBuffer, mms->ColorBufferStatic, sizeof(float)*xmin*ymin);
+    this->GetRenderWindow()->
+      SetZbufferData( renderPos[0],  renderPos[1],
+          renderPos[0] + renderSize[0] - 1,
+          renderPos[1] + renderSize[1] - 1,
+          this->DepthBuffer );
+
+    //printf("renderPos: %d %d renderSize: %d %d colorbuffersize: %d\n", renderPos0[0], renderPos0[1],
+    //    renderSize[0], renderSize[1], int(size));
+    this->GetRenderWindow()->
+      SetRGBACharPixelData( renderPos[0],  renderPos[1],
+          renderPos[0] + renderSize[0] - 1,
+          renderPos[1] + renderSize[1] - 1,
+          (unsigned char*)this->ColorBuffer, 0, 0 );
+
+    //glFinish();
+  }
+  else
+  {
+    //layers on top add the colors of their non background pixels
+    unsigned char*  GLbakBuffer = NULL;
+    GLbakBuffer = this->GetRenderWindow()->
+      GetRGBACharPixelData( renderPos[0],  renderPos[1],
+          renderPos[0] + renderSize[0] - 1,
+          renderPos[1] + renderSize[1] - 1, 0 );
+
+    bool anyhit = false;
+    unsigned char *optr = GLbakBuffer;
+    unsigned char *iptr = (unsigned char*)this->ColorBuffer;
+    float *zptr = this->DepthBuffer;
+    for ( j = 0; j < renderSize[1]; j++)
+    {
+      for ( i = 0; i < renderSize[0]; i++)
+      {
+        const float z = *zptr;
+        if (z > 0 && z < 1.0)
+        {
+          anyhit = true;
+          *(optr+0) = *(iptr+0);
+          *(optr+1) = *(iptr+1);
+          *(optr+2) = *(iptr+2);
+          *(optr+3) = *(iptr+3);
+        }
+        optr+=4;
+        iptr+=4;
+        zptr++;
+      }
+    }
+
+    if (1)//anyhit)
+    {
+      // submit the modified RGB colors to GL BACK buffer
+      this->GetRenderWindow()->
+        SetRGBACharPixelData( renderPos[0],  renderPos[1],
+            renderPos[0] + renderSize[0] - 1,
+            renderPos[1] + renderSize[1] - 1,
+            GLbakBuffer, 0, 0 );
+    }
+
+    delete [] GLbakBuffer;
+  }
+
+    //
+    // ospray
+    //
+    ospUnmapFrameBuffer(ospBuffer, osp_framebuffer);
+    // this->OSPRayManager->ospModel = ospNewModel();
+    // ospSetParam(renderer,"world",this->OSPRayManager->ospModel);
+    // ospSetParam(renderer,"model",this->OSPRayManager->ospModel);
+
+    // ospCommit(renderer);
+  //
+  // - ospray
+  //
+
+  //cerr << "MR(" << this << ") release" << endl;
+  vtkTimerLog::MarkEndEvent("Image Conversion");
+
+}
+#if 0
+//----------------------------------------------------------------------------
+// let the renderer display itself appropriately based on its layer index
+void vtkOSPRayRenderer::LayerRender()
+{
+  std::cerr << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
   int     i, j;
   int     rowLength,  OSPRaySize[2];
   int     minWidth,   minHeight;
@@ -507,6 +788,9 @@ void vtkOSPRayRenderer::LayerRender()
   const void* rgba = ospMapFrameBuffer(this->osp_framebuffer);
   memcpy((void *)this->ColorBuffer, rgba, size*sizeof(float));
   ospUnmapFrameBuffer(rgba, this->osp_framebuffer);
+
+
+  std::cerr << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
   
   
   vtkTimerLog::MarkStartEvent("Image Conversion");
@@ -568,6 +852,7 @@ void vtkOSPRayRenderer::LayerRender()
   
   vtkTimerLog::MarkEndEvent("Image Conversion");
 }
+#endif
 
 //----------------------------------------------------------------------------
 void vtkOSPRayRenderer::PrintSelf( ostream& os, vtkIndent indent )
