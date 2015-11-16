@@ -452,10 +452,10 @@
         OSPData tfAlphaData = ospNewData(NumColors, OSP_FLOAT, &TFOVals[0]);
         ospSetData(transferFunction, "opacities", tfAlphaData);
         ospCommit(transferFunction);
-        // this->SamplingRate = volProperty->GetSamplingRate();
+        this->SamplingRate = volProperty->GetSamplingRate();
         ospSet1i(OSPRayVolume, "gradientShadingEnabled", volProperty->GetShade());
-        // std::cerr << "samplingRate: " << SamplingRate << std::endl;
-        // OSPRayRenderer->SetSamples(volProperty->GetSamples());
+        //std::cerr << "samplingRate: " << SamplingRate << std::endl;
+        OSPRayRenderer->SetSamples(volProperty->GetSamples());
         PropertyTime.Modified();
       }
 
