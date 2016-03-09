@@ -42,7 +42,6 @@
 #include "vtkTimerLog.h"
 
 #include "vtkImageData.h"
-#include "vtkPNGWriter.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkPolyData.h"
 #include "vtkMultiProcessController.h"
@@ -113,6 +112,7 @@ Accumulate(false)
   Frame=0;
   HasVolume= false;
   ClearAccumFlag=false;
+  BackgroundEnabled=true;
 
   ComputeDepth = false;
   FramebufferDirty = true;
@@ -379,7 +379,6 @@ void vtkOSPRayRenderer::PreRender()
 
   this->UpdateSize();
 
-
   HasVolume = false;
   OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;
   this->OSPRayManager->OSPRayModel = ospNewModel();
@@ -389,6 +388,8 @@ void vtkOSPRayRenderer::PreRender()
   ospSetObject(oRenderer,"world",oModel);
   ospSetObject(oRenderer,"model",oModel);
   ospSetObject(oRenderer,"camera",oCamera);
+
+  ospSet1i(oRenderer, "backgroundEnabled",BackgroundEnabled);
 
 
   ospCommit(this->OSPRayManager->OSPRayModel);
@@ -405,7 +406,7 @@ void vtkOSPRayRenderer::PreRender()
 void vtkOSPRayRenderer::DeviceRender()
 {
   // glClearColor(0,0,0,0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  //DEBUG: OPENGL2 backend needs buffers cleared
+  // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  //DEBUG: OPENGL2 backend needs buffers cleared
   // std::cerr << "vtkOSPRayRenderer(" << this << ")::DeviceRender\n";
   static vtkTimerLog* timer = vtkTimerLog::New();
   timer->StartTimer();
@@ -495,10 +496,13 @@ void vtkOSPRayRenderer::LayerRender()
     this->DepthBuffer = new float[ size ];
 
     if (this->osp_framebuffer) ospFreeFrameBuffer(this->osp_framebuffer);
-    this->osp_framebuffer = ospNewFrameBuffer(osp::vec2i{renWinSize[0], renWinSize[1]}, OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
+    osp::vec2i fsize(renWinSize[0], renWinSize[1]);
+    this->osp_framebuffer = ospNewFrameBuffer(fsize, OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     AccumCounter=0;
   }
+
+
   if (HasVolume && !EnableAO)
   {
     OSPRenderer vRenderer = (OSPRenderer)this->OSPRayManager->OSPRayVolumeRenderer;
@@ -513,7 +517,6 @@ void vtkOSPRayRenderer::LayerRender()
 
     ospCommit(vModel);
     ospCommit(vRenderer);
-
     ospRenderFrame(this->osp_framebuffer,vRenderer,OSP_FB_COLOR|OSP_FB_ACCUM|(ComputeDepth?OSP_FB_DEPTH:0));
     AccumCounter++;
   }

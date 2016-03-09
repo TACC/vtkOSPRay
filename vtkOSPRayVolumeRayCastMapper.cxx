@@ -36,7 +36,6 @@ See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 #include "vtkVolumeProperty.h"
 #include "vtkVolumeRayCastFunction.h"
 #include "vtkRayCastImageDisplayHelper.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkTimerLog.h"
@@ -112,8 +111,8 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
   else
   {
     this->GetInputAlgorithm()->UpdateInformation();
-    vtkStreamingDemandDrivenPipeline::SetUpdateExtentToWholeExtent(
-      this->GetInputInformation());
+    // vtkStreamingDemandDrivenPipeline::SetUpdateExtentToWholeExtent(
+    //   this->GetInputInformation());
     this->GetInputAlgorithm()->Update();
   }
   // vol->UpdateTransferFunctions( ren );
@@ -173,13 +172,9 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
   //
   double timestep=-1;
   vtkInformation *inputInfo = this->GetInput()->GetInformation();
-  // // std::cout << __PRETTY_FUNCTION__ << " (" << this << ") " << "actor: (" <<
-  // // OSPRayActor << ") mode: (" << OSPRayActor->OSPRayModel << ") " << std::endl;
   if (inputInfo && inputInfo->Has(vtkDataObject::DATA_TIME_STEP()))
   {
-    //std::cerr << "has timestep\n";
     timestep = inputInfo->Get(vtkDataObject::DATA_TIME_STEP());
-    //std::cerr << "timestep time: " << timestep << std::endl;
   }
   vtkOSPRayVolumeCacheEntry* cacheEntry = Cache[vol][timestep];
   if (!cacheEntry)
@@ -200,7 +195,6 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
     size_t sizeBytes = dim[0]*dim[1]*dim[2] *typeSize;
 
     buffer = (char*)ScalarDataPointer;
-
     ospSet3i(OSPRayVolume, "dimensions", dim[0], dim[1], dim[2]);
     double origin[3];
     vol->GetOrigin(origin);
@@ -211,6 +205,7 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
 
     double spacing[3];
     data->GetSpacing(spacing);
+
     ospSet3f(OSPRayVolume, "gridOrigin", origin[0], origin[1], origin[2]);
     ospSet3f(OSPRayVolume, "gridSpacing", spacing[0],spacing[1],spacing[2]);
     ospSetString(OSPRayVolume, "voxelType", voxelType.c_str());
@@ -278,10 +273,6 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
     {
       float clipValue = this->GetInput()->GetPointData()->GetScalars("ospClipValues")->GetComponent(0,0);
       int clipAxis = this->GetInput()->GetPointData()->GetScalars("ospClipValues")->GetComponent(0,1);
-
-      std::cout << "clipValue: " << clipValue << std::endl;
-      std::cout << "clipAxis: " << clipAxis << std::endl;
-
       float uu[3], ll[3];
 			uu[0] = dim[0], uu[1] = dim[1], uu[2] = dim[2];
 			ll[0] = 0, ll[0] = 0, ll[0] = 0;

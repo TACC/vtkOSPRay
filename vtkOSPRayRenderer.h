@@ -106,6 +106,10 @@ public:
   void SetSamples(int);
   vtkGetMacro(Samples, int);
 
+
+  vtkGetMacro(BackgroundEnabled, bool);
+  vtkSetMacro(BackgroundEnabled, bool);
+
   vtkGetMacro(Accumulate, bool);
   void SetAccumulate(bool st)
   {
@@ -311,6 +315,7 @@ private:
   bool FramebufferDirty;
   bool HasVolume;
   bool ClearAccumFlag;
+  bool BackgroundEnabled;
 
   double backgroundRGB[3];
 
