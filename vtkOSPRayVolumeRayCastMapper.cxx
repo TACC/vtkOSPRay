@@ -243,10 +243,12 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
     ospSetData(transferFunction, "colors", colorData);
     OSPData tfAlphaData = ospNewData(NumColors, OSP_FLOAT, &TFOVals[0]);
     ospSetData(transferFunction, "opacities", tfAlphaData);
+
     ospCommit(transferFunction);
     ospSet1i(OSPRayVolume, "gradientShadingEnabled", volProperty->GetShade());
     PropertyTime.Modified();
   }
+
 
   // test for modifications to input
   if (this->GetInput()->GetMTime() > this->BuildTime)
@@ -292,6 +294,7 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
     ospSetObject((OSPObject)OSPRayVolume, "transferFunction", transferFunction);
     this->BuildTime.Modified();
   }
+
   if (SamplingRate == 0.0f)
   {
     //automatically determine sampling rate, for now just a simple switch
@@ -308,6 +311,7 @@ void vtkOSPRayVolumeRayCastMapper::Render( vtkRenderer *ren, vtkVolume *vol )
   }
   else
     ospSet1f(OSPRayVolume, "samplingRate", SamplingRate);
+
   ospCommit(OSPRayVolume);
   ospAddVolume(OSPRayModel,(OSPVolume)OSPRayVolume);
   // if (!VolumeAdded)

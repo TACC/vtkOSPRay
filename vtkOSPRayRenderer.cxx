@@ -25,6 +25,7 @@
 
 #include "vtkRenderingOpenGLConfigure.h"
 #include "ospray/ospray.h"
+#include "ospray/version.h"
 
 #include "vtkOSPRay.h"
 #include "vtkOSPRayCamera.h"
@@ -477,12 +478,6 @@ void vtkOSPRayRenderer::LayerRender()
 
   int size = renWinSize[0]*renWinSize[1];
 
-#if 0
-	std::cerr << "vp: " << renViewport[0] << " " << renViewport[1] << " " << renViewport[2] << " " << renViewport[3] << "\n";
-	std::cerr << "renderSize: " << renderSize[0] << " " << renderSize[1] << "\n";
-	std::cerr << "renWinSize: " << renWinSize[0] << " " << renWinSize[1] << "\n";
-#endif
-
   if (this->ImageX != renWinSize[0] || this->ImageY != renWinSize[1] || FramebufferDirty )
   {
     FramebufferDirty = false;
@@ -496,12 +491,12 @@ void vtkOSPRayRenderer::LayerRender()
     this->DepthBuffer = new float[ size ];
 
     if (this->osp_framebuffer) ospFreeFrameBuffer(this->osp_framebuffer);
-    osp::vec2i fsize(renWinSize[0], renWinSize[1]);
+    osp::vec2i fsize = {renWinSize[0], renWinSize[1]};
     this->osp_framebuffer = ospNewFrameBuffer(fsize, OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
+    ospCommit(osp_framebuffer);
     ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     AccumCounter=0;
   }
-
 
   if (HasVolume && !EnableAO)
   {
@@ -596,7 +591,7 @@ void vtkOSPRayRenderer::LayerRender()
   vtkTimerLog::MarkStartEvent("Image Conversion");
 
   //debug: color by opacity
-  // float* d = (float*)ColorBuffer;
+  float* d = (float*)ColorBuffer;
   // for(size_t i=0;i<size;i++)
   // {
   //   unsigned char* c = (unsigned char*)(&d[i]);
@@ -801,8 +796,11 @@ void vtkOSPRayRenderer::UpdateOSPRayRenderer()
     // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("obj");
     // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
     //this->OSPRayManager->OSPRayRenderer = this->OSPRayManager->OSPRayVolumeRenderer;
-    this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
-    //this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("scivis");
+    // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
+    if ((OSPRAY_VERSION_MAJOR) == 0 && (OSPRAY_VERSION_MINOR == 8))
+      this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
+    else
+      this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("scivis");
     // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("obj");
   }
   OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;
