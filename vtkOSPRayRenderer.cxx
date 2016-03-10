@@ -491,7 +491,9 @@ void vtkOSPRayRenderer::LayerRender()
     this->DepthBuffer = new float[ size ];
 
     if (this->osp_framebuffer) ospFreeFrameBuffer(this->osp_framebuffer);
-    osp::vec2i fsize = {renWinSize[0], renWinSize[1]};
+    osp::vec2i fsize;
+    fsize.x = renWinSize[0];
+    fsize.y =renWinSize[1];
     this->osp_framebuffer = ospNewFrameBuffer(fsize, OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     ospCommit(osp_framebuffer);
     ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
