@@ -28,6 +28,8 @@
    */
 
 #include "ospray/ospray.h"
+#include "OSPCommon.h"
+#include "ospray/version.h"
 
 #include "vtkOSPRay.h"
 #include "vtkOSPRayActor.h"
@@ -66,7 +68,6 @@
 
 #include <math.h>
 #include <algorithm>
-
 
 vtkStandardNewMacro(vtkOSPRayPolyDataMapper);
 
@@ -142,11 +143,11 @@ void* alignedMalloc(size_t size, size_t align=64)
   return aligned;
 }
 
-void alignedFree(const void* ptr) {
-  if (ptr == NULL) return;
-  int ofs = ((int*)ptr)[-1];
-  free((char*)ptr - ofs);
-}
+// void embree::embree::alignedFree(const void* ptr) {
+//   if (ptr == NULL) return;
+//   int ofs = ((int*)ptr)[-1];
+//   free((char*)ptr - ofs);
+// }
 
 //----------------------------------------------------------------------------
 // Construct empty object.
@@ -946,9 +947,9 @@ void vtkOSPRayPolyDataMapper::Draw(vtkRenderer *renderer, vtkActor *actor) {
 
       ospAddGeometry(OSPRayActor->OSPRayModel, ospMesh);
 
-			alignedFree(vertices);
-			alignedFree(triangles);
-			alignedFree(normals);
+			// embree::alignedFree(vertices);
+			// embree::alignedFree(triangles);
+			// embree::alignedFree(normals);
 
     }
 
