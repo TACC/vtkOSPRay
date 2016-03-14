@@ -57,13 +57,6 @@
 
 #include "vtkOSPRayActor.h"
 
-//  VBOs
-//
-// #if USE_VBOS
-// #include <GL/glu.h>
-// #include <assert.h>
-// #endif
-
 /* DrawBufferMode */
 #define GL_NONE                           0
 #define GL_FRONT_LEFT                     0x0400
@@ -154,12 +147,8 @@ Accumulate(false)
   ospSetObject(vRenderer,"camera",oCamera);
   ospCommit(vRenderer);
 
-#if !defined(Assert)
-#define Assert if (0)
-#endif
-
-  Assert(oRenderer != NULL && "could not create renderer");
-  Assert(vRenderer != NULL && "could not create renderer");
+  assert(oRenderer != NULL && "could not create renderer");
+  assert(vRenderer != NULL && "could not create renderer");
 
   ospSetObject(oRenderer,"world",oModel);
   ospSetObject(oRenderer,"model",oModel);
@@ -352,8 +341,7 @@ void vtkOSPRayRenderer::PreRender()
   if ((!prog_flag) || ClearAccumFlag)
   {
     if (osp_framebuffer){
-      //disable clearing the framebuffer for now
-      ;//ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
+      ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     }
     AccumCounter=0;
     ClearAccumFlag=false;
@@ -457,11 +445,8 @@ void vtkOSPRayRenderer::LayerRender()
 
   int myLeftEye = activeCamera->GetLeftEye();
 
-  //printf("LR:myLeftEye=%d\n", myLeftEye);
   int myStereoCapableWindow = this->GetRenderWindow()->GetStereoCapableWindow();
-  //printf("LR:myStereoCapableWindow=%d\n", myStereoCapableWindow);
   int myStereoMode = this->GetRenderWindow()->GetStereoRender();
-  //printf("LR:myStereoMode=%d\n", myStereoMode);
 
   // collect some useful info
   renderSize = this->GetSize();
@@ -560,9 +545,6 @@ void vtkOSPRayRenderer::LayerRender()
     for (int i = 0; i < size; i++, s++, d++)
       *d = isinf(*s) ? 1.0 : (*s - clipMin) * clipDiv;
 
-    //disable setting the Zbuffer for now
-    //this->GetRenderWindow()->SetZbufferData(renderPos[0], renderPos[1],
-    //                                        renderPos[0] + renderSize[0] - 1, renderPos[1] + renderSize[1] - 1, this->DepthBuffer);
     if (!b)
       std::cerr << "ERROR: no depth from ospray\n";
     else
@@ -732,14 +714,14 @@ void vtkOSPRayRenderer::SetSamples( int newval )
 
   OSPRenderer renderer = ((OSPRenderer)this->OSPRayManager->OSPRayRenderer);
 
-  Assert(renderer);
+  assert(renderer);
 
   ospSet1i(renderer,"spp",Samples);
   ospCommit(renderer);
 
   OSPRenderer vRenderer = ((OSPRenderer)this->OSPRayManager->OSPRayVolumeRenderer);
 
-  Assert(vRenderer);
+  assert(vRenderer);
 
   ospSet1i(vRenderer,"spp",Samples);
   ospCommit(vRenderer);
@@ -795,19 +777,14 @@ void vtkOSPRayRenderer::UpdateOSPRayRenderer()
   }
   else
   {
-    // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("obj");
-    // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
-    //this->OSPRayManager->OSPRayRenderer = this->OSPRayManager->OSPRayVolumeRenderer;
-    // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
     if ((OSPRAY_VERSION_MAJOR) == 0 && (OSPRAY_VERSION_MINOR == 8))
       this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
     else
       this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("scivis");
-    // this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("obj");
   }
   OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;
 
-  Assert(oRenderer != NULL && "could not create renderer");
+  assert(oRenderer != NULL && "could not create renderer");
 
   ospSetObject(oRenderer,"dynamic_model",ospNewModel());
   ospSetObject(oRenderer,"world",oModel);
