@@ -777,7 +777,6 @@ void vtkOSPRayRenderer::UpdateOSPRayRenderer()
   }
   else
   {
-    std::cout << "version: " << OSPRAY_VERSION_MINOR << " " << OSPRAY_VERSION << std::endl;
 #if OSPRAY_VERSION_MINOR < 9
       this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
 #else
