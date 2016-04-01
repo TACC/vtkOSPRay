@@ -100,6 +100,7 @@ void vtkOSPRayCamera::OrientOSPRayCamera(vtkRenderer *ren)
 
 		double dir[3] = {center[0] - pos[0], center[1] - pos[1], center[2] - pos[2]};
 
+    assert(ren->GetVTKWindow());
 		int *ts = ren->GetVTKWindow()->GetTileScale();
 		vfov = vfov * ts[0];
 

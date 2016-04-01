@@ -33,7 +33,6 @@
 #include "vtkOSPRayModule.h"
 #include "vtkOpenGLRenderer.h"
 
-#include "vtkOSPRay.h"
 
 #include "vtkOSPRayRenderable.h"
 #include <queue>
@@ -53,6 +52,11 @@ class SyncDisplay;
 class Light;
 }
 //ETX
+
+namespace osp
+{
+class FrameBuffer;
+}
 
 class vtkOSPRayManager;
 
@@ -289,7 +293,7 @@ private:
 
   int ImageX;
   int ImageY;
-  OSPFrameBuffer osp_framebuffer;
+  osp::FrameBuffer* osp_framebuffer;
 
   float *ColorBuffer;
   float *DepthBuffer;

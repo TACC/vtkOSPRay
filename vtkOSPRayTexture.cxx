@@ -186,25 +186,21 @@ void vtkOSPRayTexture::Load(vtkRenderer *ren, bool nearest)
             pixels[i*3+2] = color[2];
         }
 
-        OSPDataType type = OSP_VOID_PTR;
+        OSPTextureFormat type = OSP_TEXTURE_R8;
 
         if (bytesPerPixel == 4)
         {
-          type = OSP_UCHAR3;
+          type = OSP_TEXTURE_RGBA8;
         }
         else
         {
           printf("error! bytesperpixel !=4\n");
-#if !defined(Assert) 
-#define Assert if (0)
-#endif
-
-          Assert(0);
-          type = OSP_UCHAR3;
+          return;
+          // type = OSP_UCHAR3;
         }
-
-        this->OSPRayTexture = (osp::Texture2D*)ospNewTexture2D(xsize,
-         ysize,
+        osp::vec2i tsize={xsize,
+         ysize};
+        this->OSPRayTexture = (osp::Texture2D*)ospNewTexture2D(tsize,
          type,
          &pixels[0],
          nearest ? OSP_TEXTURE_FILTER_NEAREST : 0);
