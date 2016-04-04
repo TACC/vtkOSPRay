@@ -22,6 +22,8 @@ Copyright (c) 2007, Los Alamos National Security, LLC
 #ifndef __vtkOSPRayRenderable_h
 #define __vtkOSPRayRenderable_h
 
+#include "vtkOSPRayModule.h"
+#include "vtkObject.h"
 
 namespace osp
 {
@@ -29,12 +31,16 @@ namespace osp
 	class Model;
 }
 
-class vtkOSPRayRenderable
+class VTKOSPRAY_EXPORT vtkOSPRayRenderable : public vtkObject
 {
 public:
-vtkOSPRayRenderable(osp::Model* model);
-osp::Geometry* instance;
-osp::Model* model;
+    static vtkOSPRayRenderable *New();
+  vtkTypeMacro(vtkOSPRayRenderable, vtkObject);
+	void SetModel(osp::Model* model);
+	osp::Geometry* instance;
+	osp::Model* Model;
+protected:
+	vtkOSPRayRenderable();
 };
 
 #endif

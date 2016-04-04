@@ -684,7 +684,7 @@ void vtkOSPRayRenderer::SetNumberOfWorkers( int newval )
 void vtkOSPRayRenderer::AddOSPRayRenderable(vtkOSPRayRenderable* inst)
 {
   ospAddGeometry((OSPModel)this->OSPRayManager->OSPRayModel,inst->instance);
-  renderables.push_back(inst);
+  renderables.push_back(inst);  //TODO: Manage renderables
 }
 
 //----------------------------------------------------------------------------

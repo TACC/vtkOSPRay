@@ -159,7 +159,8 @@ void vtkOSPRayActor::UpdateObjects( vtkRenderer * ren )
   if (!this->GetVisibility())
     return;
   
-  Renderable = new vtkOSPRayRenderable(this->OSPRayModel);
+  Renderable = vtkOSPRayRenderable::New();
+  Renderable->SetModel(this->OSPRayModel);
   OSPRayRenderer->AddOSPRayRenderable(Renderable);
 
 }
