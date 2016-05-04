@@ -479,7 +479,7 @@ void vtkOSPRayRenderer::LayerRender()
     osp::vec2i fsize;
     fsize.x = renWinSize[0];
     fsize.y =renWinSize[1];
-    this->osp_framebuffer = ospNewFrameBuffer(fsize, OSP_RGBA_I8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
+    this->osp_framebuffer = ospNewFrameBuffer(fsize, OSP_FB_RGBA8, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     ospCommit(osp_framebuffer);
     ospFrameBufferClear(osp_framebuffer, OSP_FB_COLOR | (ComputeDepth ? OSP_FB_DEPTH : 0) | OSP_FB_ACCUM);
     AccumCounter=0;
@@ -540,11 +540,6 @@ void vtkOSPRayRenderer::LayerRender()
 
     const void *b = ospMapFrameBuffer(this->osp_framebuffer, OSP_FB_DEPTH);
 
-    float *s = (float *)b;
-    float *d = this->DepthBuffer;
-    for (int i = 0; i < size; i++, s++, d++)
-      *d = isinf(*s) ? 1.0 : (*s - clipMin) * clipDiv;
-
     if (!b)
       std::cerr << "ERROR: no depth from ospray\n";
     else
@@ -571,7 +566,10 @@ void vtkOSPRayRenderer::LayerRender()
   //
 
   const void* rgba = ospMapFrameBuffer(this->osp_framebuffer);
+  unsigned char* bptr = (unsigned char*)rgba;
   memcpy((void *)this->ColorBuffer, rgba, size*sizeof(float));  //Carson - this copy is unecessary for layer0
+  //glDrawPixels(renWinSize[0], renWinSize[1], GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+  //return;
   vtkTimerLog::MarkStartEvent("Image Conversion");
 
   //debug: color by opacity
