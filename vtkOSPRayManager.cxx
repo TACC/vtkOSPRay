@@ -25,6 +25,11 @@
 #include "vtkObjectFactory.h"
 #include "vtkOSPRay.h"
 
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <vector>
+
 vtkOSPRayManager* vtkOSPRayManager::__singleton = NULL;
 
 // vtkStandardNewMacro(vtkOSPRayManager);
@@ -38,18 +43,46 @@ vtkOSPRayManager* vtkOSPRayManager::New()
 vtkOSPRayManager::vtkOSPRayManager()
 {
   VolumeModelLastFrame=-1;
-  if (1)
+  const char* envArgs = getenv("VTKOSPRAY_ARGS");
+  if (envArgs)
   {
-    int ac =1;
+    std::stringstream ss(envArgs);
+    std::string arg;
+    std::vector<std::string> args;
+    while (ss >> arg) 
+    {
+      args.push_back(arg); 
+    }
+    int ac =args.size()+1;
+    char* av[ac];
+    // char* av[] =  {"pvOSPRay\0","--osp:mpi\0"};
+    av[0] = new char[512];
+    strcpy(av[0],"pvOSPRay\0");
+    for(int i=1;i < ac; i++)
+    {
+      av[i] = new char[args[i-1].size()+1];
+      strcpy(av[i], args[i-1].c_str());
+      printf("vtkOSPRAY: found arg: \"%s\"\n", av[i]);
+    }
+
+    ospInit(&ac, (const char**)av);
+    // int ac =2;;
+    // const char* av[] =  {"pvOSPRay\0","--osp:mpi\0"};
+    // ospInit(&ac, av);
+    // delete av;
+  }
+  else
+  {
+    int ac =2;
     const char* av[] = {"pvOSPRay\0","--osp:verbose\0"};
     ospInit(&ac, av);
   }
-  else  //coi
-  {
-    int ac =2;
-    const char* av[] = {"pvOSPRay\0","--osp:coi","\0"};
-    ospInit(&ac, av);
-  }
+  // else  //coi
+  // {
+  //   int ac =2;
+  //   const char* av[] = {"pvOSPRay\0","--osp:coi","\0"};
+  //   ospInit(&ac, av);
+  // }
   this->OSPRayVolumeRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
   this->OSPRayCamera = ospNewCamera("perspective");
   this->OSPRayModel = ospNewModel();

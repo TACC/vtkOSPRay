@@ -133,9 +133,12 @@ Accumulate(false)
   OSPModel oModel = (OSPModel)this->OSPRayManager->OSPRayModel;
   OSPCamera oCamera = (OSPCamera)this->OSPRayManager->OSPRayCamera;
   this->EnableAO=false;
+  this->EnablePathtracing=false;
   bool ao = EnableAO;
   EnableAO=-1;
+  EnablePathtracing=-1;
   SetEnableAO(ao);
+  SetEnablePathtracing(false);
   OSPRenderer oRenderer = (OSPRenderer)this->OSPRayManager->OSPRayRenderer;
   OSPRenderer vRenderer = (OSPRenderer)this->OSPRayManager->OSPRayVolumeRenderer;
   ospSet3f(vRenderer, "bgColor", backgroundRGB[0], backgroundRGB[1], backgroundRGB[2]);
@@ -762,22 +765,27 @@ void vtkOSPRayRenderer::SetEnableVolumeShading( int newval )
 
 void vtkOSPRayRenderer::UpdateOSPRayRenderer()
 {
+  printf("DEBUG updateosprayrenderer\n");
   OSPModel oModel = (OSPModel)this->OSPRayManager->OSPRayModel;
   OSPCamera oCamera = (OSPCamera)this->OSPRayManager->OSPRayCamera;
 
   if (EnableAO != 0)
   {
+  printf("DEBUG ao\n");
     this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("ao4");
   }
   else if (EnablePathtracing != 0)
   {
+  printf("DEBUG pathracer\n");
     this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("pathtracer");
   }
   else
   {
 #if OSPRAY_VERSION_MINOR < 9
+      printf("DEBUG volray renderer\n");
       this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("raycast_volume_renderer");
 #else
+      printf("DEBUG scivis renderer\n");
       this->OSPRayManager->OSPRayRenderer = (osp::Renderer*)ospNewRenderer("scivis");
 #endif
   }
