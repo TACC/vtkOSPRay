@@ -499,7 +499,8 @@ void vtkOSPRayRenderer::LayerRender()
     ospSetObject(vRenderer,"camera",oCamera);
     if (ComputeDepth)
       ospSet1i(vRenderer, "backgroundEnabled",0);
-
+    //TODO: DEBUG: volume compositing needs no background
+    ospSet1i(vRenderer, "backgroundEnabled",0);  
     ospCommit(vModel);
     ospCommit(vRenderer);
     ospRenderFrame(this->osp_framebuffer,vRenderer,OSP_FB_COLOR|OSP_FB_ACCUM|(ComputeDepth?OSP_FB_DEPTH:0));
@@ -571,8 +572,8 @@ void vtkOSPRayRenderer::LayerRender()
   const void* rgba = ospMapFrameBuffer(this->osp_framebuffer);
   unsigned char* bptr = (unsigned char*)rgba;
   memcpy((void *)this->ColorBuffer, rgba, size*sizeof(float));  //Carson - this copy is unecessary for layer0
-  //glDrawPixels(renWinSize[0], renWinSize[1], GL_RGBA, GL_UNSIGNED_BYTE, rgba);
-  //return;
+  glDrawPixels(renWinSize[0], renWinSize[1], GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+  return;
   vtkTimerLog::MarkStartEvent("Image Conversion");
 
   //debug: color by opacity
